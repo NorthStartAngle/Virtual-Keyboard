@@ -1,12 +1,17 @@
-﻿@implements IAsyncDisposable
-@using System.Text.Json
+﻿@page "/virtual/{*pageRoute}"
+
+@implements IAsyncDisposable
+@inherits proKeyboard.classes.KeyboardBase
+@using System.Text
+@using proKeyboard.classes
 @inject IJSRuntime JS
+@inject ILogger<KeyboardBase> Logger
 
 <HeadContent>
     @* <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css"  rel="stylesheet" /> *@
 </HeadContent>
 
-<div class="keyboard" style="display:@display">
+<div class="keyboard" style="display:@display" id="vkeyboard">
   <div class="keyboard__row keyboard__row--h1">
     <div data-key="27" class="key--word">
       <span>esc</span>
@@ -221,32 +226,64 @@
     </div>
   </div>
 </div>
-<div>
-    @errors
-</div>
+<p>@helpers</p>
+<p @ref ="example" />
+
 @code{
+    [Parameter]
+    public string? PageRoute { get; set; }
+
     public string display = "none";
-    public string errors = "";
+    public string? helpers;
+
+    ElementReference example;
     private IJSObjectReference? keyboardModule;
     private IJSObjectReference? keyboardInstance;
-    private static DotNetObjectReference<VKeyboard>? self;
+
+    private static VKeyboard? me = null;
+
+    private KeyboardInterop? jsInteropClasses;
 
     protected override void OnInitialized()
     {
-        self = DotNetObjectReference.Create(this);
+
+
+        jsInteropClasses = new KeyboardInterop(JS);
+
+        /*
+        if (jsInteropClasses is not null)
+            {
+            string? result = await jsInteropClasses.CallMessagel("param");
+        }
+        */
 
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        me = this;
         if (firstRender)
         {
-            await JS.InvokeVoidAsync("onBlazorReady");
-
-            await JS.InvokeVoidAsync("JsFunctions.addFocusListenerEvent");
+            //await JS.InvokeVoidAsync("onBlazorReady");
+            //await JS.InvokeVoidAsync("JsFunctions.addFocusListenerEvent");
 
             keyboardModule = await JS.InvokeAsync<IJSObjectReference>("import", "./keyboard.js");
-            //keyboardInstance = await keyboardModule.InvokeAsync<IJSObjectReference>();
+            //keyboardInstance = await keyboardModule.InvokeAsync<IJSObjectReference>("JsFunctions.addKeyboardListenerEvent", keyboardModule);
+
+            await JS.InvokeVoidAsync("JsFunctions.addKeyboardListenerEvent", keyboardModule);
+            //await module.InvokeAsync<string>("showPrompt", "ShowPrompt parameter as string");
+            /*
+            mapModule = await JS.InvokeAsync<IJSObjectReference>("import", "./mapComponent.js");
+           mapInstance = await mapModule.InvokeAsync<IJSObjectReference>("addMapToElement", mapElement);
+           ---
+           private async Task ShowAsync(double latitude, double longitude)
+               {
+               if (mapModule is not null && mapInstance is not null)
+                   {
+                   await mapModule.InvokeVoidAsync("setMapCenter", mapInstance,latitude, longitude).AsTask();
+        }
+        }
+        */
         }
     }
 
@@ -264,25 +301,33 @@
     }
 
     [JSInvokable]
-    public static void func(ElementReference element )
+    public static Task<string> focusout(string id)
     {
-        Console.WriteLine("called");
-        //return Task<string>.Factory.StartNew(() => "OK");
+
+        if (me != null && me.display != "none")
+        {
+            //me.JS.InvokeVoidAsync("setElementContent", me.example, id);
+            me.display = "none";
+            me.StateHasChanged();
+        }
+
+        return Task.FromResult(me.display);
     }
 
     [JSInvokable]
-    public static Task<string> func1(Object objRef)
+    public static Task<string> focusin(string id)
     {
-        try
+
+        if (me != null)
         {
-            ElementReference ef = (ElementReference)objRef;
-        }catch(Exception e)
-        {
-            self.Value.errors = e.Message;
+            //me.JS.InvokeVoidAsync("setElementContent", me.example, id);
+            me.helpers = id;
+            me.display = "in-block";
+            me.StateHasChanged();
         }
-        
-        return Task.FromResult(
-            "return");
+
+        return Task.FromResult(me.display);
     }
 
+    public void Dispose() => me?.Dispose();
 }

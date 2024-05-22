@@ -18,46 +18,11 @@
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </body>
+
 <script>
-   
-    onBlazorReady=()=> {
-        //$("#input1").hide();
-    }
-   
+        window.sayHello1 = (dotNetHelper) => {
+            return dotNetHelper.invokeMethodAsync('GetHelloMessage');
+        };
+    </script>
 
-    $(document).ready(function () {
-        console.log("document ready");  
-    });
-
-    window.JsFunctions = {
-        addFocusListenerEvent: function (foo) {
-            let serializeEvent = function (e) {
-                if (e) {
-                    return {
-                        key: e.key,
-                        code: e.keyCode.toString(),
-                        location: e.location,
-                        repeat: e.repeat,
-                        ctrlKey: e.ctrlKey,
-                        shiftKey: e.shiftKey,
-                        altKey: e.altKey,
-                        metaKey: e.metaKey,
-                        type: e.type
-                    };
-                }
-            };
-            $("input").on("focus", (e) => {
-                const element = e.currentTarget;
-                console.log("Current Element=", element.getAttribute("id"));
-                
-                //var jsObjectReference = DotNet.createJSObjectReference(element);
-                
-
-                DotNet.invokeMethodAsync('proKeyboard', 'func1', element).then(str => { console.log(str); });
-                //DotNet.disposeJSObjectReference(jsObjectReference);
-            });
-
-        }
-    };
-</script>
 </html>
